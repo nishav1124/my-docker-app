@@ -1,29 +1,36 @@
 name: Beginner Docker CI/CD
 
-# Run this pipeline whenever you push code to the main branch
 on:
   push:
     branches: [ "main" ]
 
 jobs:
-  build-and-run:
+  build-test-and-push:
     runs-on: ubuntu-latest
 
     steps:
-      # Step A: Download your code into the GitHub runner
+      # Step A: Download your code
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Step B: Build the Docker image using your Dockerfile
+      # Step B: Log in to Docker Hub using your GitHub Secrets
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Step C: Build the image tagged with your Docker Hub username
       - name: Build Docker image
-        run: docker build -t my-first-app .
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/my-first-app:latest .
 
-      # Step C: Start the Docker container in the background (-d)
-      - name: Run Docker container
-        run: docker run -d --name test-container -p 3000:3000 my-first-app
-
-      # Step D: Verify the container is actually working
-      - name: Test the running container
+      # Step D: Start and test the container before pushing
+      - name: Run and test container
         run: |
+          docker run -d --name test-container -p 3000:3000 ${{ secrets.DOCKER_USERNAME }}/my-first-app:latest
           sleep 3
           curl http://localhost:3000
+
+      # Step E: Push the verified image to Docker Hub
+      - name: Push Docker image to Docker Hub
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/my-first-app:latest
