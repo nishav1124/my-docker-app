@@ -1,0 +1,29 @@
+name: Beginner Docker CI/CD
+
+# Run this pipeline whenever you push code to the main branch
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-run:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step A: Download your code into the GitHub runner
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step B: Build the Docker image using your Dockerfile
+      - name: Build Docker image
+        run: docker build -t my-first-app .
+
+      # Step C: Start the Docker container in the background (-d)
+      - name: Run Docker container
+        run: docker run -d --name test-container -p 3000:3000 my-first-app
+
+      # Step D: Verify the container is actually working
+      - name: Test the running container
+        run: |
+          sleep 3
+          curl http://localhost:3000
